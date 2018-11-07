@@ -74,8 +74,6 @@ function preload() {
 function create() {
   const map = this.make.tilemap({ key: "map" });
 
-  socket.emit('request players');
-
   // Parameters are the name you gave the tileset in Tiled and then the key of the tileset image in
   // Phaser's cache (i.e. the name you used in preload)
   const tileset = map.addTilesetImage("tuxmon-sample-32px-extruded", "tiles");
@@ -199,6 +197,8 @@ function create() {
     players[id].player.destroy();
     delete players[id];
   });
+
+  socket.emit('request players');
 }
 
 function update(time, delta) {
@@ -215,43 +215,45 @@ function update(time, delta) {
 
   socket.on('game state', (updatedPlayers) => {
     for (var id in updatedPlayers) {
-      // Stop any previous movement from the last frame
-      players[id].player.body.setVelocity(0);
-
-      players[id].player.body.setVelocityX(updatedPlayers[id].velocityX);
-      players[id].player.body.setVelocityY(updatedPlayers[id].velocityY);
-      players[id].player.body.velocity.normalize().scale(175);
-
-      if (updatedPlayers[id].movement === 'left') {
-        players[id].player.anims.play('misa-left-walk', true);
-      }
-      else if (updatedPlayers[id].movement === 'right') {
-        players[id].player.anims.play('misa-right-walk', true);
-      }
-      else if (updatedPlayers[id].movement === 'up') {
-        players[id].player.anims.play('misa-back-walk', true);
-      }
-      else if (updatedPlayers[id].movement === 'down') {
-        players[id].player.anims.play('misa-front-walk', true);
-      }
-      else {
-        players[id].player.anims.stop();
+      if (players[id] !== undefined) { // emitted player is registered to client
+        // Stop any previous movement from the last frame
         players[id].player.body.setVelocity(0);
 
-        if (updatedPlayers[id].prevVelocityX < 0) players[id].player.setTexture("atlas", "misa-left");
-        else if (updatedPlayers[id].prevVelocityX > 0) players[id].player.setTexture("atlas", "misa-right");
-        else if (updatedPlayers[id].prevVelocityY < 0) players[id].player.setTexture("atlas", "misa-back");
-        else if (updatedPlayers[id].prevVelocityY > 0) players[id].player.setTexture("atlas", "misa-front");
-      }
+        players[id].player.body.setVelocityX(updatedPlayers[id].velocityX);
+        players[id].player.body.setVelocityY(updatedPlayers[id].velocityY);
+        players[id].player.body.velocity.normalize().scale(175);
 
-      if (id !== socket.id) {
-        players[id].player.x = updatedPlayers[id].x;
-        players[id].player.y = updatedPlayers[id].y;
+        if (updatedPlayers[id].movement === 'left') {
+          players[id].player.anims.play('misa-left-walk', true);
+        }
+        else if (updatedPlayers[id].movement === 'right') {
+          players[id].player.anims.play('misa-right-walk', true);
+        }
+        else if (updatedPlayers[id].movement === 'up') {
+          players[id].player.anims.play('misa-back-walk', true);
+        }
+        else if (updatedPlayers[id].movement === 'down') {
+          players[id].player.anims.play('misa-front-walk', true);
+        }
+        else {
+          players[id].player.anims.stop();
+          players[id].player.body.setVelocity(0);
+
+          if (updatedPlayers[id].prevVelocityX < 0) players[id].player.setTexture("atlas", "misa-left");
+          else if (updatedPlayers[id].prevVelocityX > 0) players[id].player.setTexture("atlas", "misa-right");
+          else if (updatedPlayers[id].prevVelocityY < 0) players[id].player.setTexture("atlas", "misa-back");
+          else if (updatedPlayers[id].prevVelocityY > 0) players[id].player.setTexture("atlas", "misa-front");
+        }
+
+        if (id !== socket.id) {
+          players[id].player.x = updatedPlayers[id].x;
+          players[id].player.y = updatedPlayers[id].y;
+        }
       }
     }
   });
 
-  if (players[socket.id].player !== undefined && cursors) { // client data is ready to send
+  if (players[socket.id] !== undefined && cursors) { // client data is ready to send
     socket.emit('player state', players[socket.id].player.x, players[socket.id].player.y, cursors, players[socket.id].player.body.velocity.clone());
   }
 }
