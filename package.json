@@ -1,0 +1,15 @@
+{
+  "name": "connor75",
+  "version": "1.0.0",
+  "description": "twitch.tv/connor75",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "cameron friel",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.16.4",
+    "socket.io": "^2.1.1"
+  }
+}
