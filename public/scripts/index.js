@@ -218,7 +218,7 @@ function create() {
   socket.emit('request players');
 
   // fetches client's initial items
-  const url = 'http://localhost:5000/items';
+  const url = 'http://localhost:3000/items';
   fetch(url).then((data) => {
     return data.json();
   }).then((res) => {
