@@ -1,12 +1,42 @@
+require('dotenv').config();
 var express = require('express');
 var path = require('path');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var firebase = require('firebase');
+
+let port = process.env.PORT || 3000;
 
 let chatters = {}; // object of all users in the chatroom
 
+// initialize firebase
+
+var config = {
+    apiKey: process.env.API_KEY,
+    authDomain: process.env.AUTH_DOMAIN,
+    databaseURL: process.env.DATABASE_URL,
+    projectId: process.env.PROJECT_ID,
+    storageBucket: process.env.STORAGE_BUCKET,
+    messagingSenderId: process.env.MESSAGING_SENDER_ID
+};
+
+firebase.initializeApp(config);
+
 app.use("/public", express.static(__dirname + "/public"));
+
+// api routes
+
+app.get('/items', (req, res) => {
+  console.log(process.env.API_KEY);
+  firebase.database().ref('items').on('value', (snapshot) => {
+    res.status(200);
+    res.send(snapshot.val());
+    console.log(snapshot.val());
+  });
+});
+
+// Web page routes
 
 app.get('/', (req, res) => { // launch screen
   res.sendFile(__dirname + '/public/index.html');
@@ -126,6 +156,6 @@ io.on('connection', (socket) => {
   });
 });
 
-http.listen(process.env.PORT || 3000, () => {
-  console.log('Server is listening on port 3000.');
+http.listen(port, () => {
+  console.log(`Server is listening on port ${port}.`);
 });

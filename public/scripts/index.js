@@ -45,6 +45,10 @@ class Dialog {
           }).setScrollFactor(0).setDepth(30);
   }
 
+  updateDialogText(text) {
+    this.dialogText.text = text;
+  }
+
   removeDialog() {
     this.dialogText.destroy();
     this.dialogPersistence = 0;
@@ -56,7 +60,8 @@ let cursors;
 let player;
 let showDebug = false;
 
-let dialog = new Dialog(); // dialog object to handle text on the screen
+let messageDialog = new Dialog(); // dialog object to handle text on the screen
+let itemsDialog = new Dialog(); // displays the items the user has
 let players = {}; // players on the map
 
 function preload() {
@@ -137,6 +142,18 @@ function create() {
     .setScrollFactor(0)
     .setDepth(30);
 
+  // displays the items the client currently holds
+
+  itemsDialog.dialogText = this.add
+    .text(600, 500, 'User Items: ', {
+      font: "18px monospace",
+      fill: "#000000",
+      padding: { x: 20, y: 10 },
+      backgroundColor: "#ffffff"
+    })
+    .setScrollFactor(0)
+    .setDepth(30);
+
   // Debug graphics
   this.input.keyboard.once("keydown_D", event => {
     // Turn on physics debugging to show player's hitbox
@@ -157,7 +174,7 @@ function create() {
   this.input.keyboard.on('keydown_T', (event) => {
     if ((Math.round(players[socket.id].player.x) - 976) >= -10 && (Math.round(players[socket.id].player.x) - 976) <= 10 && (Math.round(players[socket.id].player.y) - 840) >= -10 && (Math.round(players[socket.id].player.y) - 840) <= 10) {
       console.log('Talk to that fountain!');
-      dialog.setDialogText(this, fountainText);
+      messageDialog.setDialogText(this, fountainText);
     }
   });
 
@@ -199,17 +216,31 @@ function create() {
   });
 
   socket.emit('request players');
+
+  // fetches client's initial items
+  const url = 'http://localhost:5000/items';
+  fetch(url).then((data) => {
+    return data.json();
+  }).then((res) => {
+    let items = Object.entries(res);
+    let text = 'User Items: ';
+
+    for (const [key, value] of items) {
+      text += `\n${key}`;
+    }
+    itemsDialog.updateDialogText(text);
+  });
 }
 
 function update(time, delta) {
   const speed = 175;
 
-  if (dialog.dialogText !== undefined) {
-    if (dialog.dialogPersistence === 200) {
-      dialog.removeDialog();
+  if (messageDialog.dialogText !== undefined) {
+    if (messageDialog.dialogPersistence === 200) {
+      messageDialog.removeDialog();
     }
     else {
-      dialog.dialogPersistence++;
+      messageDialog.dialogPersistence++;
     }
   }
 
